@@ -113,8 +113,9 @@ public class MAAdFormat: CustomStringConvertible {
     ///   support for adaptive banners and the maximum height
     ///   is 15% the height of the screen.
     var adaptiveSize: CGSize {
-        // Implementation would retrieve current screen width
-        return .zero
+        let context = ProcessInfo.processInfo.androidContext
+        let result = maxAdFormat.getAdaptiveSize(context)
+        return CGSize(Double(result.getWidth()), Double(result.getHeight()))
     }
     
     /// Get the adaptive banner size for the provided width
@@ -132,8 +133,9 @@ public class MAAdFormat: CustomStringConvertible {
     /// - Returns: The adaptive banner size for the current
     ///   orientation and width.
     func adaptiveSize(forWidth width: CGFloat) -> CGSize {
-        // Implementation would go here
-        return .zero
+        let context = ProcessInfo.processInfo.androidContext
+        let result = maxAdFormat.getAdaptiveSize(Int(width.rounded(.down)), context)
+        return CGSize(Double(result.getWidth()), Double(result.getHeight()))
     }
     
     // MARK: - Type Checks
