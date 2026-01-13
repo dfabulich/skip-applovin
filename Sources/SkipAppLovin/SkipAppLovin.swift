@@ -6,8 +6,15 @@ import Foundation
 import OSLog
 
 #if SKIP
+import com.applovin.sdk.AppLovinSdk
+import com.applovin.sdk.AppLovinSdkConfiguration
+import com.applovin.sdk.AppLovinSdkInitializationConfiguration
+import com.applovin.mediation.MaxSegment
+import com.applovin.mediation.MaxSegmentCollection
+import androidx.compose.ui.platform.LocalContext
+
 // SKIP @bridge
-class MASegment {
+public class MASegment {
     /// The key of the segment. Must be a non-negative number
     /// in the range of [0, 32000].
     let key: Int
@@ -29,15 +36,27 @@ class MASegment {
         self.key = key
         self.values = values
     }
+    
+    internal var maxSegment: MaxSegment {
+        MaxSegment(key, values.toList())
+    }
 }
 
 // SKIP @bridge
-class MASegmentCollection {
+public class MASegmentCollection {
     /// An array of MASegment objects.
     let segments: [MASegment]
     
     internal init(segments: [MASegment]) {
         self.segments = segments
+    }
+    
+    internal var maxSegmentCollection: MaxSegmentCollection {
+        let builder = MaxSegmentCollection.builder()
+        for segment in segments {
+            builder.addSegment(segment.maxSegment)
+        }
+        return builder.build()
     }
     
     /// Creates a MASegmentCollection object from the builder
@@ -65,7 +84,7 @@ class MASegmentCollection {
 }
 
 /// Builder class used to create a MASegmentCollection object.
-class MASegmentCollectionBuilder {
+public class MASegmentCollectionBuilder {
     private var segments: [MASegment] = []
     
     /// Adds a MASegment to the collection.
@@ -84,246 +103,11 @@ class MASegmentCollectionBuilder {
     }
 }
 
-
-// MARK: - ALSdkInitializationConfiguration
-
-struct ALSdkInitializationConfiguration {
-    let sdkKey: String
-    let axonEventKey: String?
-    let mediationProvider: String?
-    let pluginVersion: String?
-    let segmentCollection: MASegmentCollection?
-    let testDeviceAdvertisingIdentifiers: [String]?
-    let adUnitIdentifiers: [String]?
-    let isExceptionHandlerEnabled: Bool
-    
-    init(
-        sdkKey: String,
-        axonEventKey: String? = nil,
-        mediationProvider: String? = nil,
-        pluginVersion: String? = nil,
-        segmentCollection: MASegmentCollection? = nil,
-        testDeviceAdvertisingIdentifiers: [String]? = nil,
-        adUnitIdentifiers: [String]? = nil,
-        isExceptionHandlerEnabled: Bool
-    ) {
-        self.sdkKey = sdkKey
-        self.axonEventKey = axonEventKey
-        self.mediationProvider = mediationProvider
-        self.pluginVersion = pluginVersion
-        self.segmentCollection = segmentCollection
-        self.testDeviceAdvertisingIdentifiers = testDeviceAdvertisingIdentifiers
-        self.adUnitIdentifiers = adUnitIdentifiers
-        self.isExceptionHandlerEnabled = isExceptionHandlerEnabled
-    }
-    
-    // MARK: - Initialization
-    
-    static func configuration(
-        withSdkKey sdkKey: String
-    ) -> ALSdkInitializationConfiguration {
-        return ALSdkInitializationConfiguration(
-            sdkKey: sdkKey,
-            axonEventKey: nil,
-            mediationProvider: nil,
-            pluginVersion: nil,
-            segmentCollection: nil,
-            testDeviceAdvertisingIdentifiers: [],
-            adUnitIdentifiers: [],
-            isExceptionHandlerEnabled: true
-        )
-    }
-    
-    static func configuration(
-        withSdkKey sdkKey: String,
-        axonEventKey: String? = nil,
-        builderBlock: (
-            (ALSdkInitializationConfigurationBuilder) -> Void
-        )?
-    ) -> ALSdkInitializationConfiguration {
-        let builder = ALSdkInitializationConfigurationBuilder(
-            sdkKey: sdkKey,
-            axonEventKey: axonEventKey
-        )
-        builderBlock?(builder)
-        return builder.build()
-    }
-    
-    static func builder(
-        withSdkKey sdkKey: String,
-        axonEventKey: String? = nil
-    ) -> ALSdkInitializationConfigurationBuilder {
-        return ALSdkInitializationConfigurationBuilder(
-            sdkKey: sdkKey,
-            axonEventKey: axonEventKey
-        )
-    }
-}
-
-// MARK: - ALSdkInitializationConfigurationBuilder
-
-class ALSdkInitializationConfigurationBuilder {
-    let sdkKey: String
-    let axonEventKey: String?
-    var mediationProvider: String?
-    var pluginVersion: String?
-    var segmentCollection: MASegmentCollection?
-    var testDeviceAdvertisingIdentifiers: [String] = []
-    var adUnitIdentifiers: [String] = []
-    var isExceptionHandlerEnabled: Bool = true
-    
-    init(
-        sdkKey: String,
-        axonEventKey: String? = nil
-    ) {
-        self.sdkKey = sdkKey
-        self.axonEventKey = axonEventKey
-    }
-    
-    // MARK: - Build
-    
-    func build() -> ALSdkInitializationConfiguration {
-        return ALSdkInitializationConfiguration(
-            sdkKey: sdkKey,
-            axonEventKey: axonEventKey,
-            mediationProvider: mediationProvider,
-            pluginVersion: pluginVersion,
-            segmentCollection: segmentCollection,
-            testDeviceAdvertisingIdentifiers: (
-                testDeviceAdvertisingIdentifiers
-            ),
-            adUnitIdentifiers: adUnitIdentifiers,
-            isExceptionHandlerEnabled: isExceptionHandlerEnabled
-        )
-    }
-}
-
-// SKIP @bridge
-class ALSdkConfiguration {
-    /// This enum represents the user's geography used to
-    /// determine the type of consent flow shown to the user.
-    enum ConsentFlowUserGeography: Int {
-        /// User's geography is unknown.
-        case unknown
-        
-        /// The user is in GDPR region.
-        case gdpr
-        
-        /// The user is in a non-GDPR region.
-        case other
-    }
-    
-    /// AppLovin SDK-defined app tracking transparency status
-    /// values (extended to include "unavailable" state on iOS
-    /// before iOS14).
-    enum AppTrackingTransparencyStatus: Int {
-        /// Device is on iOS before iOS14,
-        /// AppTrackingTransparency.framework is not available.
-        case unavailable = -1
-        
-        /// The user has not yet received an authorization
-        /// request to authorize access to app-related data that
-        /// can be used for tracking the user or the device.
-        case notDetermined
-        
-        /// Authorization to access app-related data that can be
-        /// used for tracking the user or the device is
-        /// restricted.
-        case restricted
-        
-        /// The user denies authorization to access app-related
-        /// data that can be used for tracking the user or the
-        /// device.
-        case denied
-        
-        /// The user authorizes access to app-related data that
-        /// can be used for tracking the user or the device.
-        case authorized
-    }
-    
-    /// Get the user's geography used to determine the type of
-    /// consent flow shown to the user.
-    /// If no such determination could be made,
-    /// ConsentFlowUserGeography.unknown will be returned.
-    let consentFlowUserGeography: ConsentFlowUserGeography
-    
-    /// Gets the country code for this user. The value of this
-    /// property will be an empty string if no country code is
-    /// available for this user.
-    ///
-    /// - Warning: Do not confuse this with the currency code
-    ///   which is "USD" in most cases.
-    let countryCode: String
-    
-    /// Get the list of those Ad Unit IDs that are in the
-    /// waterfall that is currently active for a particular user
-    /// and for which Amazon Publisher Services is enabled.
-    ///
-    /// Which waterfall is currently active for a user depends
-    /// on things like A/B tests, keyword targeting, or DNT.
-    ///
-    /// - Returns: `nil` when configuration fetching fails
-    ///   (e.g. in the case of no connection) or an empty array
-    ///   if no Ad Unit IDs have Amazon Publisher Services
-    ///   enabled.
-    let enabledAmazonAdUnitIdentifiers: [String]?
-    
-    /// Indicates whether or not the user authorizes access to
-    /// app-related data that can be used for tracking the user
-    /// or the device.
-    ///
-    /// - Warning: Users can revoke permission at any time
-    ///   through the "Allow Apps To Request To Track" privacy
-    ///   setting on the device.
-    let appTrackingTransparencyStatus:
-        AppTrackingTransparencyStatus
-    
-    /// Whether or not test mode is enabled for this session.
-    ///
-    /// Returns `true` in one of the following cases:
-    /// - ALSdkInitializationConfiguration.
-    ///   testDeviceAdvertisingIdentifiers was set with current
-    ///   device's IDFA prior to SDK initialization.
-    /// - Current device was registered as a test device
-    ///   through MAX dashboard -> MAX Test Devices prior to
-    ///   SDK initialization.
-    /// - Test mode was manually enabled for this session
-    ///   through the Mediation Debugger during the last
-    ///   session.
-    /// - Current device is a simulator.
-    let isTestModeEnabled: Bool
-    
-    private init(
-        consentFlowUserGeography: ConsentFlowUserGeography,
-        countryCode: String,
-        enabledAmazonAdUnitIdentifiers: [String]?,
-        appTrackingTransparencyStatus:
-            AppTrackingTransparencyStatus,
-        isTestModeEnabled: Bool
-    ) {
-        self.consentFlowUserGeography =
-            consentFlowUserGeography
-        self.countryCode = countryCode
-        self.enabledAmazonAdUnitIdentifiers =
-            enabledAmazonAdUnitIdentifiers
-        self.appTrackingTransparencyStatus =
-            appTrackingTransparencyStatus
-        self.isTestModeEnabled = isTestModeEnabled
-    }
-}
-
 @available(*, deprecated, message: "This API has been deprecated and will be removed in a future release.")
 enum ALConsentDialogState: Int {
     case unknown
     case applies
     case doesNotApply
-}
-
-extension ALSdkConfiguration {
-    @available(*, deprecated, message: "This API has been deprecated and will be removed in a future release.")
-    var consentDialogState: ALConsentDialogState {
-        return .unknown
-    }
 }
 
 #else
@@ -425,15 +209,34 @@ public struct SkipALSdkConfiguration: Sendable {
     /// - Current device is a simulator.
     let isTestModeEnabled: Bool
     
-    internal init(
-        consentFlowUserGeography: ALConsentFlowUserGeography,
-        countryCode: String,
-        enabledAmazonAdUnitIdentifiers: [String]?,
-        appTrackingTransparencyStatus:
-            ALAppTrackingTransparencyStatus,
-        isTestModeEnabled: Bool
-    ) {
+    @available(*, deprecated, message: "This API has been deprecated and will be removed in a future release.")
+    var consentDialogState: ALConsentDialogState {
+        return .unknown
+    }
+    
+    #if SKIP
+    internal init(_ sdkConfig: AppLovinSdkConfiguration) {
+        let consentFlowUserGeography: AppLovinSdkConfiguration.ConsentFlowUserGeography = sdkConfig.getConsentFlowUserGeography()
         switch consentFlowUserGeography {
+        case .UNKNOWN:
+            self.consentFlowUserGeography = .unknown
+        case .GDPR:
+            self.consentFlowUserGeography = .GDPR
+        case .OTHER:
+            self.consentFlowUserGeography = .other
+        }
+        self.countryCode = sdkConfig.getCountryCode()
+        if let enabledAmazonAdUnitIdentifiers = sdkConfig.getEnabledAmazonAdUnitIds() {
+            self.enabledAmazonAdUnitIdentifiers = Array(enabledAmazonAdUnitIdentifiers)
+        } else {
+            self.enabledAmazonAdUnitIdentifiers = nil
+        }
+        self.appTrackingTransparencyStatus = .unavailable
+        self.isTestModeEnabled = sdkConfig.isTestModeEnabled()
+    }
+    #else
+    internal init(_ sdkConfig: ALSdkConfiguration) {
+        switch sdkConfig.consentFlowUserGeography {
         case .unknown:
             self.consentFlowUserGeography = .unknown
         case .GDPR:
@@ -443,10 +246,9 @@ public struct SkipALSdkConfiguration: Sendable {
         @unknown default:
             fatalError()
         }
-        self.countryCode = countryCode
-        self.enabledAmazonAdUnitIdentifiers =
-            enabledAmazonAdUnitIdentifiers
-        switch appTrackingTransparencyStatus {
+        self.countryCode = sdkConfig.countryCode
+        self.enabledAmazonAdUnitIdentifiers = sdkConfig.enabledAmazonAdUnitIdentifiers
+        switch sdkConfig.appTrackingTransparencyStatus {
         case .unavailable:
             self.appTrackingTransparencyStatus = .unavailable
         case .notDetermined:
@@ -460,8 +262,10 @@ public struct SkipALSdkConfiguration: Sendable {
         @unknown default:
             fatalError()
         }
-        self.isTestModeEnabled = isTestModeEnabled
+        self.isTestModeEnabled = sdkConfig.isTestModeEnabled
     }
+    
+    #endif
 }
 
 
@@ -479,7 +283,34 @@ public struct SkipAppLovin: @unchecked Sendable {
         exceptionHandlerEnabled: Bool? = nil
     ) async -> SkipALSdkConfiguration {
         #if SKIP
-        fatalError()
+        let builder = AppLovinSdkInitializationConfiguration.builder(sdkKey)
+        guard axonEventKey == nil else {
+            fatalError("axonEventKey not supported in SkipAppLovin")
+        }
+        if let mediationProvider {
+            builder.setMediationProvider(mediationProvider)
+        }
+        if let pluginVersion {
+            builder.setPluginVersion(pluginVersion)
+        }
+        if let segmentCollection {
+            builder.setSegmentCollection(segmentCollection.maxSegmentCollection)
+        }
+        if let testDeviceAdvertisingIdentifiers {
+            builder.setTestDeviceAdvertisingIds(testDeviceAdvertisingIdentifiers.toList())
+        }
+        if let adUnitIdentifiers {
+            builder.setAdUnitIds(adUnitIdentifiers.toList())
+        }
+        if let exceptionHandlerEnabled {
+            builder.setExceptionHandlerEnabled(exceptionHandlerEnabled)
+        }
+        let sdkConfig = await withCheckedContinuation { continuation in
+            AppLovinSdk.getInstance(ProcessInfo.processInfo.androidContext).initialize(builder.build()) { sdkConfig in
+                continuation.resume(returning: sdkConfig)
+            }
+        }
+        return SkipALSdkConfiguration(sdkConfig)
         #else
         let initConfig: ALSdkInitializationConfiguration
         if let axonEventKey {
@@ -526,13 +357,7 @@ public struct SkipAppLovin: @unchecked Sendable {
             }
         }
         let sdkConfig = await ALSdk.shared().initialize(with: initConfig)
-        return SkipALSdkConfiguration(
-            consentFlowUserGeography: sdkConfig.consentFlowUserGeography,
-            countryCode: sdkConfig.countryCode,
-            enabledAmazonAdUnitIdentifiers: sdkConfig.enabledAmazonAdUnitIdentifiers,
-            appTrackingTransparencyStatus: sdkConfig.appTrackingTransparencyStatus,
-            isTestModeEnabled: sdkConfig.isTestModeEnabled
-        )
+        return SkipALSdkConfiguration(sdkConfig)
         #endif
     }
 }
