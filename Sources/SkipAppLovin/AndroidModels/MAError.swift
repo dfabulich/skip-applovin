@@ -46,7 +46,7 @@ public enum MAErrorCode: Int {
 }
 
 /// This class encapsulates various data for MAX load and display errors.
-public class MAError {
+public class MAError: CustomStringConvertible {
     /// The error code for the error.
     public let code: MAErrorCode
     
@@ -78,6 +78,10 @@ public class MAError {
         }
         
         self.requestLatency = TimeInterval(maxError.getRequestLatencyMillis()) / 1000.0
+    }
+    
+    public var description: String {
+        "MAError: code=\(code), message=\(message), mediatedNetworkErrorCode=\(mediatedNetworkErrorCode), mediatedNetworkErrorMessage=\(mediatedNetworkErrorMessage)"
     }
 }
 #endif

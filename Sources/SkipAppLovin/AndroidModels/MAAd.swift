@@ -15,7 +15,7 @@ import com.applovin.mediation.nativeAds.MaxNativeAd
 // MARK: - MAAd
 
 /// This class represents an ad that has been served by AppLovin MAX.
-public class MAAd {
+public class MAAd: CustomStringConvertible {
     /// The format of this ad.
     public let format: MAAdFormat
     
@@ -104,6 +104,10 @@ public class MAAd {
     /// Gets the ad value for a given key.
     public func adValue(forKey key: String, defaultValue: String?) -> String? {
         return maxAd.getAdValue(key, defaultValue)
+    }
+    
+    public var description: String {
+        "MAAd: adUnitId=\(adUnitIdentifier), format=\(format), networkName=\(networkName)"
     }
 }
 #endif
