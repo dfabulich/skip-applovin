@@ -13,6 +13,7 @@ import com.applovin.mediation.ads.MaxInterstitialAd
 import com.applovin.mediation.MaxAd
 import com.applovin.mediation.MaxAdListener
 import com.applovin.mediation.MaxError
+import com.applovin.mediation.MaxAdRevenueListener
 
 /// This class represents a full-screen interstitial ad.
 public class MAInterstitialAd {
@@ -21,7 +22,7 @@ public class MAInterstitialAd {
     
     /// A delegate that will be notified about ad revenue
     /// events.
-    //weak var revenueDelegate: MAAdRevenueDelegate?
+    public weak var revenueDelegate: MAAdRevenueDelegate?
     
     /// A delegate that will be notified about ad request
     /// events.
@@ -49,7 +50,9 @@ public class MAInterstitialAd {
     ///   for.
     public init(adUnitIdentifier: String) {
         self.ad = MaxInterstitialAd(adUnitIdentifier)
-        ad.setListener(MaxAdListenerAdapter(self))
+        let listener = MaxAdListenerAdapter(self)
+        ad.setListener(listener)
+        ad.setRevenueListener(listener)
     }
     
     /// Load the ad for the current interstitial. Set
@@ -167,10 +170,14 @@ public class MAInterstitialAd {
     }
 }
 
-class MaxAdListenerAdapter: MaxAdListener {
+class MaxAdListenerAdapter: MaxAdListener, MaxAdRevenueListener {
     weak var interstitialAd: MAInterstitialAd?
     init(_ interstitialAd: MAInterstitialAd) {
         self.interstitialAd = interstitialAd
+    }
+    
+    override func onAdRevenuePaid(maxAd: MaxAd) {
+        interstitialAd?.revenueDelegate?.didPayRevenue(for: MAAd(maxAd))
     }
     override func onAdLoaded(_ ad: MaxAd) {
         interstitialAd?.delegate?.didLoad(MAAd(ad))
