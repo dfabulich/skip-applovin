@@ -12,13 +12,209 @@ let logger: Logger = Logger(subsystem: "SkipAppLovin", category: "SkipAppLovinAd
 
 #if SKIP
 import androidx.compose.ui.viewinterop.AndroidView
-
-import com.applovin.mediation.MaxAdViewAdListener
-import com.applovin.mediation.MaxAdViewConfiguration
-import com.applovin.mediation.MaxAdFormat
 import com.applovin.mediation.ads.MaxAdView
 import com.applovin.mediation.MaxAd
+import com.applovin.mediation.MaxAdFormat
+import com.applovin.mediation.MaxAdViewAdListener
+import com.applovin.mediation.MaxAdViewConfiguration
 import com.applovin.mediation.MaxError
+
+// MARK: - Protocols
+
+/// This protocol defines a listener to be notified about ad events.
+public protocol MAAdDelegate: AnyObject {
+    /// The SDK invokes this method when a new ad has been loaded.
+    func didLoad(_ ad: MAAd)
+    
+    /// The SDK invokes this method when an ad could not be retrieved.
+    func didFailToLoadAd(forAdUnitIdentifier adUnitIdentifier: String, withError error: MAError)
+    
+    /// The SDK invokes this method when a full-screen ad is displayed.
+    ///
+    /// - Warning: This method is deprecated for MRECs. It will only be called for full-screen ads.
+    func didDisplay(_ ad: MAAd)
+    
+    /// The SDK invokes this method when a full-screen ad is hidden.
+    ///
+    /// - Warning: This method is deprecated for MRECs. It will only be called for full-screen ads.
+    func didHide(_ ad: MAAd)
+    
+    /// The SDK invokes this method when the ad is clicked.
+    func didClick(_ ad: MAAd)
+    
+    /// The SDK invokes this method when the ad failed to display.
+    func didFail(toDisplay ad: MAAd, withError error: MAError)
+}
+
+/// This protocol defines a listener to be notified about ad view events.
+public protocol MAAdViewAdDelegate: MAAdDelegate {
+    /// The SDK invokes this method when the MAAdView has expanded to the full screen.
+    func didExpand(_ ad: MAAd)
+    
+    /// The SDK invokes this method when the MAAdView has collapsed back to its original size.
+    func didCollapse(_ ad: MAAd)
+}
+
+// MARK: - MAErrorCode
+
+/// This enum contains various error codes that the SDK can return when a MAX ad fails to load or display.
+public enum MAErrorCode: Int {
+    /// This error code represents an error that could not be categorized into one of the other defined errors.
+    case unspecified = -1
+    
+    /// This error code indicates that MAX returned no eligible ads from any mediated networks for this app/device.
+    case noFill = 204
+    
+    /// This error code indicates that MAX returned eligible ads from mediated networks, but all ads failed to load.
+    case adLoadFailed = -5001
+    
+    /// This error code indicates that the SDK failed to load an ad because the publisher provided an invalid ad unit identifier.
+    case invalidAdUnitIdentifier = -5603
+    
+    /// This error code indicates that the ad request failed due to a generic network error.
+    case networkError = -1000
+    
+    /// This error code indicates that the ad request timed out due to a slow internet connection.
+    case networkTimeout = -1001
+    
+    /// This error code indicates that the ad request failed because the device is not connected to the internet.
+    case noNetwork = -1009
+    
+    /// This error code indicates that you attempted to show a fullscreen ad while another fullscreen ad is still showing.
+    case fullscreenAdAlreadyShowing = -23
+    
+    /// This error code indicates you are attempting to show a fullscreen ad before the one has been loaded.
+    case fullscreenAdNotReady = -24
+    
+    /// This error code indicates you attempted to present a fullscreen ad from an invalid view controller.
+    case fullscreenAdInvalidViewController = -25
+}
+
+// MARK: - MAError
+
+/// This class encapsulates various data for MAX load and display errors.
+public class MAError {
+    /// The error code for the error.
+    public let code: MAErrorCode
+    
+    /// The error message for the error.
+    public let message: String
+    
+    /// The mediated network's error code for the error. Available for errors returned in didFailToDisplayAd only.
+    public let mediatedNetworkErrorCode: Int
+    
+    /// The mediated network's error message for the error. Defaults to an empty string. Available for errors returned in didFailToDisplayAd only.
+    public let mediatedNetworkErrorMessage: String
+    
+    /// The underlying waterfall of ad responses.
+    public let waterfall: MAAdWaterfallInfo?
+    
+    /// The latency of the mediation ad load request in seconds.
+    public let requestLatency: TimeInterval
+    
+    internal init(_ maxError: MaxError) {
+        self.code = MAErrorCode(rawValue: maxError.getCode()) ?? .unspecified
+        self.message = maxError.getMessage() ?? ""
+        self.mediatedNetworkErrorCode = maxError.getMediatedNetworkErrorCode()
+        self.mediatedNetworkErrorMessage = maxError.getMediatedNetworkErrorMessage() ?? ""
+        self.waterfall = nil // TODO: Implement MAAdWaterfallInfo wrapper
+        self.requestLatency = TimeInterval(maxError.getRequestLatencyMillis()) / 1000.0
+    }
+}
+
+// MARK: - MAAdWaterfallInfo
+
+/// Placeholder for MAAdWaterfallInfo - to be implemented later
+public class MAAdWaterfallInfo {
+    // TODO: Implement MAAdWaterfallInfo wrapper
+}
+
+// MARK: - MAAd
+
+/// This class represents an ad that has been served by AppLovin MAX.
+public class MAAd {
+    /// The format of this ad.
+    public let format: MAAdFormat
+    
+    /// The size of the AdView format ad, or CGSize.zero otherwise.
+    let size: CGSize
+    
+    /// The ad unit ID for which this ad was loaded.
+    public let adUnitIdentifier: String
+    
+    /// The ad network from which this ad was loaded.
+    public let networkName: String
+    
+    /// The ad network placement for which this ad was loaded.
+    public let networkPlacement: String
+    
+    /// The creative id tied to the ad, if any.
+    public let creativeIdentifier: String?
+    
+    /// The ad's revenue amount. In the case where no revenue amount exists, or it is not available yet, will return a value of 0.
+    public let revenue: Double
+    
+    /// The precision of the revenue value for this ad.
+    public let revenuePrecision: String
+    
+    /// The placement name that you assign when you integrate each ad format.
+    public let placement: String?
+    
+    /// The underlying waterfall of ad responses.
+    public let waterfall: MAAdWaterfallInfo?
+    
+    /// The latency of the mediation ad load request in seconds.
+    public let requestLatency: TimeInterval
+    
+    /// For Native ads only. Get an instance of the MANativeAd containing the assets used to render the native ad view.
+    public let nativeAd: MANativeAd?
+    
+    /// The DSP network that provided the loaded ad when the ad is served through AppLovin Exchange.
+    public let DSPName: String?
+    
+    /// The DSP id network that provided the loaded ad when the ad is served through AppLovin Exchange.
+    public let DSPIdentifier: String?
+    
+    private let maxAd: MaxAd
+    
+    internal init(_ maxAd: MaxAd, format: MAAdFormat) {
+        self.maxAd = maxAd
+        self.format = format
+        
+        let sizeObj = maxAd.getSize()
+        self.size = CGSize(width: Double(sizeObj.getWidth()), height: Double(sizeObj.getHeight()))
+        
+        self.adUnitIdentifier = maxAd.getAdUnitId() ?? ""
+        self.networkName = maxAd.getNetworkName() ?? ""
+        self.networkPlacement = maxAd.getNetworkPlacement() ?? ""
+        self.creativeIdentifier = maxAd.getCreativeId()
+        self.revenue = maxAd.getRevenue()
+        self.revenuePrecision = maxAd.getRevenuePrecision() ?? ""
+        self.placement = maxAd.getPlacement()
+        self.waterfall = nil // TODO: Implement MAAdWaterfallInfo wrapper
+        self.requestLatency = TimeInterval(maxAd.getRequestLatencyMillis()) / 1000.0
+        self.nativeAd = nil // TODO: Implement MANativeAd wrapper
+        self.DSPName = maxAd.getDspName()
+        self.DSPIdentifier = maxAd.getDspId()
+    }
+    
+    /// Gets the ad value for a given key.
+    public func adValue(forKey key: String) -> String? {
+        return maxAd.getAdValue(key)
+    }
+    
+    /// Gets the ad value for a given key.
+    public func adValue(forKey key: String, defaultValue: String?) -> String? {
+        return maxAd.getAdValue(key, defaultValue)
+    }
+}
+
+// MARK: - MANativeAd
+
+/// Placeholder for MANativeAd - to be implemented later
+public class MANativeAd {
+    // TODO: Implement MANativeAd wrapper
+}
 
 public class MAAdFormat: CustomStringConvertible {
     // MARK: - Static Ad Formats
@@ -190,6 +386,29 @@ public class MAAdFormat: CustomStringConvertible {
     var description: String {
         self.displayName
     }
+    
+    static func fromMaxAdFormat(_ maxAdFormat: MaxAdFormat) -> MAAdFormat {
+        switch maxAdFormat {
+        case MaxAdFormat.BANNER:
+            return .banner
+        case MaxAdFormat.MREC:
+            return .mrec
+        case MaxAdFormat.LEADER:
+            return .leader
+        case MaxAdFormat.INTERSTITIAL:
+            return .interstitial
+        case MaxAdFormat.APP_OPEN:
+            return .appOpen
+        case MaxAdFormat.REWARDED:
+            return .rewarded
+        case MaxAdFormat.NATIVE:
+            return .native
+        case MaxAdFormat.REWARDED_INTERSTITIAL:
+            return .rewardedInterstitial
+        default:
+            fatalError("Unknown MaxAdFormat: \(maxAdFormat)")
+        }
+    }
 }
 
 /// Defines the type of adaptive MAAdView.
@@ -328,21 +547,24 @@ struct AppLovinAdViewWrapper: View {
     let adFormat: MAAdFormat?
     let configuration: MAAdViewConfiguration?
     let backgroundColor: Color
+    let delegate: MAAdViewAdDelegate?
     
-    init(bannerAdUnitIdentifier: String, adFormat: MAAdFormat, placement: String?, backgroundColor: Color = .black) {
+    init(bannerAdUnitIdentifier: String, adFormat: MAAdFormat, placement: String?, backgroundColor: Color = .black, delegate: MAAdViewAdDelegate? = nil) {
         self.bannerAdUnitIdentifier = bannerAdUnitIdentifier
         self.placement = placement
         self.adFormat = adFormat
         self.configuration = nil
         self.backgroundColor = backgroundColor
+        self.delegate = delegate
     }
     
-    init(bannerAdUnitIdentifier: String, configuration: MAAdViewConfiguration, placement: String?, backgroundColor: Color = .black) {
+    init(bannerAdUnitIdentifier: String, configuration: MAAdViewConfiguration, placement: String?, backgroundColor: Color = .black, delegate: MAAdViewAdDelegate? = nil) {
         self.bannerAdUnitIdentifier = bannerAdUnitIdentifier
         self.placement = placement
         self.adFormat = nil
         self.configuration = configuration
         self.backgroundColor = backgroundColor
+        self.delegate = delegate
     }
     
     var body: some View {
@@ -359,7 +581,7 @@ struct AppLovinAdViewWrapper: View {
                     adView = MaxAdView(bannerAdUnitIdentifier, configuration.maxAdViewConfiguration)
                 }
                 guard let adView else { fatalError() }
-                adView.setListener(AdViewWrapperListener())
+                adView.setListener(AdViewWrapperListener(delegate: delegate))
                 //adView.setBackground(backgroundColor.colorImpl().toArgb())
                 adView.loadAd()
                 return adView
@@ -369,29 +591,73 @@ struct AppLovinAdViewWrapper: View {
 }
 
 class AdViewWrapperListener: MaxAdViewAdListener {
+    weak var delegate: MAAdViewAdDelegate?
+    
+    init(delegate: MAAdViewAdDelegate?) {
+        self.delegate = delegate
+    }
+    
     override func onAdLoaded(maxAd: MaxAd) {
         logger.info("onAdLoaded \(maxAd)")
+        guard let delegate = delegate else { return }
+        let format = MAAdFormat.fromMaxAdFormat(maxAd.getFormat())
+        let ad = MAAd(maxAd, format: format)
+        delegate.didLoad(ad)
     }
 
     override func onAdLoadFailed(adUnitId: String, error: MaxError) {
         logger.error("onAdLoadFailed \(error)")
+        guard let delegate = delegate else { return }
+        let maError = MAError(error)
+        delegate.didFailToLoadAd(forAdUnitIdentifier: adUnitId, withError: maError)
     }
 
     override func onAdDisplayFailed(ad: MaxAd, error: MaxError) {
         logger.error("onAdDisplayFailed \(error)")
+        guard let delegate = delegate else { return }
+        let format = MAAdFormat.fromMaxAdFormat(ad.getFormat())
+        let maAd = MAAd(ad, format: format)
+        let maError = MAError(error)
+        delegate.didFail(toDisplay: maAd, withError: maError)
     }
 
-    override func onAdClicked(maxAd: MaxAd) {}
+    override func onAdClicked(maxAd: MaxAd) {
+        guard let delegate = delegate else { return }
+        let format = MAAdFormat.fromMaxAdFormat(maxAd.getFormat())
+        let ad = MAAd(maxAd, format: format)
+        delegate.didClick(ad)
+    }
 
-    override func onAdExpanded(maxAd: MaxAd) {}
+    override func onAdExpanded(maxAd: MaxAd) {
+        guard let delegate = delegate else { return }
+        let format = MAAdFormat.fromMaxAdFormat(maxAd.getFormat())
+        let ad = MAAd(maxAd, format: format)
+        delegate.didExpand(ad)
+    }
 
-    override func onAdCollapsed(maxAd: MaxAd) {}
+    override func onAdCollapsed(maxAd: MaxAd) {
+        guard let delegate = delegate else { return }
+        let format = MAAdFormat.fromMaxAdFormat(maxAd.getFormat())
+        let ad = MAAd(maxAd, format: format)
+        delegate.didCollapse(ad)
+    }
 
-    override func onAdDisplayed(maxAd: MaxAd) { /* DO NOT USE - THIS IS RESERVED FOR FULLSCREEN ADS ONLY AND WILL BE REMOVED IN A FUTURE SDK RELEASE */ }
+    override func onAdDisplayed(maxAd: MaxAd) {
+        /* DO NOT USE - THIS IS RESERVED FOR FULLSCREEN ADS ONLY AND WILL BE REMOVED IN A FUTURE SDK RELEASE */
+        guard let delegate = delegate else { return }
+        let format = MAAdFormat.fromMaxAdFormat(maxAd.getFormat())
+        let ad = MAAd(maxAd, format: format)
+        delegate.didDisplay(ad)
+    }
 
-    override func onAdHidden(maxAd: MaxAd) { /* DO NOT USE - THIS IS RESERVED FOR FULLSCREEN ADS ONLY AND WILL BE REMOVED IN A FUTURE SDK RELEASE */ }
+    override func onAdHidden(maxAd: MaxAd) {
+        /* DO NOT USE - THIS IS RESERVED FOR FULLSCREEN ADS ONLY AND WILL BE REMOVED IN A FUTURE SDK RELEASE */
+        guard let delegate = delegate else { return }
+        let format = MAAdFormat.fromMaxAdFormat(maxAd.getFormat())
+        let ad = MAAd(maxAd, format: format)
+        delegate.didHide(ad)
+    }
 }
-
 
 #else
 import AppLovinSDK
@@ -402,33 +668,36 @@ struct AppLovinAdViewWrapper: UIViewRepresentable {
     let adFormat: MAAdFormat?
     let configuration: MAAdViewConfiguration?
     let backgroundColor: UIColor
-    init(bannerAdUnitIdentifier: String, adFormat: MAAdFormat, placement: String?, backgroundColor: Color = .black) {
+    let delegate: MAAdViewAdDelegate?
+    
+    init(bannerAdUnitIdentifier: String, adFormat: MAAdFormat, placement: String?, backgroundColor: Color = .black, delegate: MAAdViewAdDelegate? = nil) {
         self.bannerAdUnitIdentifier = bannerAdUnitIdentifier
         self.placement = placement
         self.adFormat = adFormat
         self.configuration = nil
         self.backgroundColor = UIColor(backgroundColor)
+        self.delegate = delegate
     }
-    init(bannerAdUnitIdentifier: String, configuration: MAAdViewConfiguration, placement: String?, backgroundColor: Color = .black) {
+    
+    init(bannerAdUnitIdentifier: String, configuration: MAAdViewConfiguration, placement: String?, backgroundColor: Color = .black, delegate: MAAdViewAdDelegate? = nil) {
         self.bannerAdUnitIdentifier = bannerAdUnitIdentifier
         self.placement = placement
         self.adFormat = nil
         self.configuration = configuration
         self.backgroundColor = UIColor(backgroundColor)
+        self.delegate = delegate
     }
-    func makeUIView(context: Context) -> MAAdView
+    func makeUIView(context: Context) -> AppLovinSDK.MAAdView
     {
-        let config = MAAdViewConfiguration { builder in
-            builder.adaptiveType = .anchored
-        }
-        let adView: MAAdView
+        let adView: AppLovinSDK.MAAdView
         if let adFormat {
-            adView = MAAdView(adUnitIdentifier:  bannerAdUnitIdentifier, adFormat: adFormat)
+            adView = AppLovinSDK.MAAdView(adUnitIdentifier: bannerAdUnitIdentifier, adFormat: adFormat)
         } else if let configuration {
-            adView = MAAdView(adUnitIdentifier:  bannerAdUnitIdentifier, configuration: configuration)
+            adView = AppLovinSDK.MAAdView(adUnitIdentifier: bannerAdUnitIdentifier, configuration: configuration)
         } else {
             fatalError("Invalid initialization for AppLovinAdViewWrapper")
         }
+        context.coordinator.delegate = delegate
         adView.delegate = context.coordinator
         if let placement {
             adView.placement = placement
@@ -442,7 +711,7 @@ struct AppLovinAdViewWrapper: UIViewRepresentable {
         return adView
     }
     
-    func updateUIView(_ uiView: MAAdView, context: Context) {}
+    func updateUIView(_ uiView: AppLovinSDK.MAAdView, context: Context) {}
     
     func makeCoordinator() -> Coordinator
     {
@@ -451,34 +720,49 @@ struct AppLovinAdViewWrapper: UIViewRepresentable {
 }
 
 extension AppLovinAdViewWrapper {
-    class Coordinator: NSObject, MAAdViewAdDelegate
+    class Coordinator: NSObject, AppLovinSDK.MAAdViewAdDelegate
         {
+            weak var delegate: MAAdViewAdDelegate?
+            
             // MARK: MAAdDelegate Protocol
             
-            func didLoad(_ ad: MAAd) {
-                print("MAX banner didLoad ad")
+            func didLoad(_ ad: AppLovinSDK.MAAd) {
+                delegate?.didLoad(ad)
             }
             
-            func didFailToLoadAd(forAdUnitIdentifier adUnitIdentifier: String, withError error: MAError) {
-                print("MAX banner didFailToLoadAd: \(String(describing: error))")
+            func didFailToLoadAd(forAdUnitIdentifier adUnitIdentifier: String, withError error: AppLovinSDK.MAError) {
+                delegate?.didFailToLoadAd(forAdUnitIdentifier: adUnitIdentifier, withError: error)
             }
             
-            func didClick(_ ad: MAAd) {}
+            func didClick(_ ad: AppLovinSDK.MAAd) {
+                delegate?.didClick(ad)
+            }
             
-            func didFail(toDisplay ad: MAAd, withError error: MAError) {
-                print("MAX banner didFail: \(String(describing: error))")
+            func didFail(toDisplay ad: AppLovinSDK.MAAd, withError error: AppLovinSDK.MAError) {
+                delegate?.didFail(toDisplay: ad, withError: error)
             }
             
             // MARK: MAAdViewAdDelegate Protocol
             
-            func didExpand(_ ad: MAAd) {}
+            func didExpand(_ ad: AppLovinSDK.MAAd) {
+                delegate?.didExpand(ad)
+            }
             
-            func didCollapse(_ ad: MAAd) {}
+            func didCollapse(_ ad: AppLovinSDK.MAAd) {
+                delegate?.didCollapse(ad)
+            }
             
             // MARK: Deprecated Callbacks
             
-            func didDisplay(_ ad: MAAd) { /* use this for impression tracking */ }
-            func didHide(_ ad: MAAd) { /* DO NOT USE - THIS IS RESERVED FOR FULLSCREEN ADS ONLY AND WILL BE REMOVED IN A FUTURE SDK RELEASE */ }
+            func didDisplay(_ ad: AppLovinSDK.MAAd) {
+                /* use this for impression tracking */
+                delegate?.didDisplay(ad)
+            }
+            
+            func didHide(_ ad: AppLovinSDK.MAAd) {
+                /* DO NOT USE - THIS IS RESERVED FOR FULLSCREEN ADS ONLY AND WILL BE REMOVED IN A FUTURE SDK RELEASE */
+                delegate?.didHide(ad)
+            }
         }
 }
 
@@ -494,9 +778,12 @@ private struct WidthPreferenceKey: PreferenceKey {
 public struct SkipAppLovinAdView: View {
     let bannerAdUnitIdentifier: String
     let placement: String?
-    public init(bannerAdUnitIdentifier: String, placement: String? = nil) {
+    let delegate: MAAdViewAdDelegate?
+    
+    public init(bannerAdUnitIdentifier: String, placement: String? = nil, delegate: MAAdViewAdDelegate? = nil) {
         self.bannerAdUnitIdentifier = bannerAdUnitIdentifier
         self.placement = placement
+        self.delegate = delegate
     }
     @State var width: CGFloat? = nil
     @State var adFormat: MAAdFormat?
@@ -507,6 +794,7 @@ public struct SkipAppLovinAdView: View {
                     bannerAdUnitIdentifier: bannerAdUnitIdentifier,
                     adFormat: adFormat,
                     placement: placement,
+                    delegate: delegate
                 )
                     .id(adFormat) // rebuild AdView from scratch when the format changes
                     .frame(height: adFormat.adaptiveSize(forWidth: width).height)
@@ -541,10 +829,13 @@ public struct SkipAppLovinAdaptiveAdView: View {
     let bannerAdUnitIdentifier: String
     let placement: String?
     let configuration: MAAdViewConfiguration
-    public init(bannerAdUnitIdentifier: String, configuration: MAAdViewConfiguration, placement: String? = nil) {
+    let delegate: MAAdViewAdDelegate?
+    
+    public init(bannerAdUnitIdentifier: String, configuration: MAAdViewConfiguration, placement: String? = nil, delegate: MAAdViewAdDelegate? = nil) {
         self.bannerAdUnitIdentifier = bannerAdUnitIdentifier
         self.configuration = configuration
         self.placement = placement
+        self.delegate = delegate
     }
     @State var width: CGFloat? = nil
     @State var adFormat: MAAdFormat?
@@ -555,6 +846,7 @@ public struct SkipAppLovinAdaptiveAdView: View {
                     bannerAdUnitIdentifier: bannerAdUnitIdentifier,
                     configuration: configuration,
                     placement: placement,
+                    delegate: delegate
                 )
                     .id(adFormat) // rebuild AdView from scratch when the format changes
                     .frame(height: adFormat.adaptiveSize(forWidth: width).height)
@@ -586,3 +878,4 @@ public struct SkipAppLovinAdaptiveAdView: View {
 }
 
 #endif
+
