@@ -267,64 +267,39 @@ private struct WidthPreferenceKey: PreferenceKey {
 }
 
 public struct SkipAppLovinAdView: View {
-    @State private var uuid = UUID().uuidString
     let bannerAdUnitIdentifier: String
+    let adFormat: MAAdFormat
+    let configuration: MAAdViewConfiguration?
     let placement: String?
     let delegate: MAAdViewAdDelegate?
     
-    public init(bannerAdUnitIdentifier: String, placement: String? = nil, delegate: MAAdViewAdDelegate? = nil) {
+    public init(bannerAdUnitIdentifier: String, adFormat: MAAdFormat, configuration: MAAdViewConfiguration? = nil, placement: String? = nil, delegate: MAAdViewAdDelegate? = nil) {
         self.bannerAdUnitIdentifier = bannerAdUnitIdentifier
+        self.adFormat = adFormat
+        self.configuration = configuration
         self.placement = placement
         self.delegate = delegate
     }
-    @State var width: CGFloat? = nil
-    @State var adFormat: MAAdFormat?
     public var body: some View {
-        Group {
-            if let adFormat, let width {
-                AppLovinAdViewWrapper(
-                    bannerAdUnitIdentifier: bannerAdUnitIdentifier,
-                    adFormat: adFormat,
-                    placement: placement,
-                    delegate: delegate
-                )
-                .id("\(uuid)-\(adFormat)") // rebuild AdView from scratch when the format changes
-                .frame(height: adFormat.adaptiveSize(forWidth: width).height)
-                .frame(maxWidth: .infinity)
-            } else {
-                Color.clear
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 1)
-            }
-        }
-        .background {
-            GeometryReader { proxy in
-                let _ = logger.debug("background \(proxy.size.width)")
-                Color.clear
-                    .preference(key: WidthPreferenceKey.self, value: proxy.size.width)
-            }
-        }
-        .onPreferenceChange(WidthPreferenceKey.self) { availableWidth in
-            logger.debug("availableWidth: \(String(describing: availableWidth))")
-            guard let availableWidth else { return }
-            width = availableWidth
-            let availableAdFormat: MAAdFormat = availableWidth >= MAAdFormat.leader.size.width ? .leader : .banner
-            if availableAdFormat != adFormat {
-                logger.debug("updating adFormat to \(availableAdFormat)")
-                adFormat = availableAdFormat
-            }
-        }
+        AppLovinAdViewWrapper(
+            bannerAdUnitIdentifier: bannerAdUnitIdentifier,
+            adFormat: adFormat,
+            placement: placement,
+            delegate: delegate
+        )
+        .frame(width: adFormat.size.width, height: adFormat.size.height)
     }
 }
 
-public struct SkipAppLovinAdaptiveAdView: View {
+/// Automatically switches between banner and leaderboard ad formats based on available width
+public struct SkipAppLovinFlexibleBannerAdView: View {
     @State private var uuid = UUID().uuidString
     let bannerAdUnitIdentifier: String
+    let configuration: MAAdViewConfiguration?
     let placement: String?
-    let configuration: MAAdViewConfiguration
     let delegate: MAAdViewAdDelegate?
     
-    public init(bannerAdUnitIdentifier: String, configuration: MAAdViewConfiguration, placement: String? = nil, delegate: MAAdViewAdDelegate? = nil) {
+    public init(bannerAdUnitIdentifier: String, configuration: MAAdViewConfiguration? = nil, placement: String? = nil, delegate: MAAdViewAdDelegate? = nil) {
         self.bannerAdUnitIdentifier = bannerAdUnitIdentifier
         self.configuration = configuration
         self.placement = placement
@@ -337,7 +312,7 @@ public struct SkipAppLovinAdaptiveAdView: View {
             if let adFormat, let width {
                 AppLovinAdViewWrapper(
                     bannerAdUnitIdentifier: bannerAdUnitIdentifier,
-                    configuration: configuration,
+                    adFormat: adFormat,
                     placement: placement,
                     delegate: delegate
                 )
