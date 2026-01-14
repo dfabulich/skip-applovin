@@ -86,6 +86,9 @@ struct AppLovinAdViewWrapper: View {
                 } else {
                     adView = MaxAdView(bannerAdUnitIdentifier, configuration?.maxAdViewConfiguration)
                 }
+                if let placement {
+                    adView.setPlacement(placement)
+                }
                 adView.setListener(AdViewWrapperListener(delegate: delegate))
                 adView.setBackgroundColor(color)
                 adView.loadAd()
