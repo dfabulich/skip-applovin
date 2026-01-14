@@ -24,7 +24,7 @@ import AppLovinSDK
 #endif
 
 // SKIP @bridge
-public struct SkipALSdkConfiguration: Sendable {
+public struct SkipALSdkConfiguration: Sendable, CustomStringConvertible {
     /// This enum represents the user's geography used to
     /// determine the type of consent flow shown to the user.
     enum ConsentFlowUserGeography: Int {
@@ -174,6 +174,9 @@ public struct SkipALSdkConfiguration: Sendable {
         self.isTestModeEnabled = sdkConfig.isTestModeEnabled
     }
     
+    public var description: String {
+        "SkipAlSdkConfiguration testMode=\(isTestModeEnabled)"
+    }
     #endif
 }
 
