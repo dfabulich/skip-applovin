@@ -20,6 +20,7 @@ import com.applovin.mediation.MaxAdViewConfiguration
 import com.applovin.mediation.MaxError
 import com.applovin.mediation.MaxAdRevenueListener
 import com.applovin.mediation.MaxAdRequestListener
+import com.applovin.mediation.MaxAdReviewListener
 import androidx.compose.ui.graphics.toArgb
 
 // MARK: - Android
@@ -33,8 +34,9 @@ struct AppLovinAdViewWrapper: View {
     let delegate: MAAdViewAdDelegate?
     let revenueDelegate: MAAdRevenueDelegate?
     let requestDelegate: MAAdRequestDelegate?
+    let adReviewDelegate: MAAdReviewDelegate?
     
-    init(bannerAdUnitIdentifier: String, adFormat: MAAdFormat? = nil, configuration: MAAdViewConfiguration? = nil, placement: String?, backgroundColor: Color = .black, delegate: MAAdViewAdDelegate? = nil, revenueDelegate: MAAdRevenueDelegate? = nil, requestDelegate: MAAdRequestDelegate? = nil) {
+    init(bannerAdUnitIdentifier: String, adFormat: MAAdFormat? = nil, configuration: MAAdViewConfiguration? = nil, placement: String?, backgroundColor: Color = .black, delegate: MAAdViewAdDelegate? = nil, revenueDelegate: MAAdRevenueDelegate? = nil, requestDelegate: MAAdRequestDelegate? = nil, adReviewDelegate: MAAdReviewDelegate? = nil) {
         self.bannerAdUnitIdentifier = bannerAdUnitIdentifier
         self.placement = placement
         self.adFormat = adFormat
@@ -43,6 +45,7 @@ struct AppLovinAdViewWrapper: View {
         self.delegate = delegate
         self.revenueDelegate = revenueDelegate
         self.requestDelegate = requestDelegate
+        self.adReviewDelegate = adReviewDelegate
     }
     
     var body: some View {
@@ -61,10 +64,11 @@ struct AppLovinAdViewWrapper: View {
                 if let placement {
                     adView.setPlacement(placement)
                 }
-                let listener = AdViewWrapperListener(delegate: delegate, revenueDelegate: revenueDelegate, requestDelegate: requestDelegate)
+                let listener = AdViewWrapperListener(delegate: delegate, revenueDelegate: revenueDelegate, requestDelegate: requestDelegate, adReviewDelegate: adReviewDelegate)
                 adView.setListener(listener)
                 adView.setRevenueListener(listener)
                 adView.setRequestListener(listener)
+                adView.setAdReviewListener(listener)
                 adView.setBackgroundColor(color)
                 adView.loadAd()
                 return adView
@@ -73,15 +77,17 @@ struct AppLovinAdViewWrapper: View {
     }
 }
 
-class AdViewWrapperListener: MaxAdViewAdListener, MaxAdRevenueListener, MaxAdRequestListener {
+class AdViewWrapperListener: MaxAdViewAdListener, MaxAdRevenueListener, MaxAdRequestListener, MaxAdReviewListener {
     weak var delegate: MAAdViewAdDelegate?
     weak var revenueDelegate: MAAdRevenueDelegate?
     weak var requestDelegate: MAAdRequestDelegate?
+    weak var adReviewDelegate: MAAdReviewDelegate?
     
-    init(delegate: MAAdViewAdDelegate?, revenueDelegate: MAAdRevenueDelegate?, requestDelegate: MAAdRequestDelegate?) {
+    init(delegate: MAAdViewAdDelegate?, revenueDelegate: MAAdRevenueDelegate?, requestDelegate: MAAdRequestDelegate?, adReviewDelegate: MAAdReviewDelegate?) {
         self.delegate = delegate
         self.revenueDelegate = revenueDelegate
         self.requestDelegate = requestDelegate
+        self.adReviewDelegate = adReviewDelegate
     }
     
     override func onAdRevenuePaid(maxAd: MaxAd) {
@@ -94,6 +100,11 @@ class AdViewWrapperListener: MaxAdViewAdListener, MaxAdRevenueListener, MaxAdReq
     override func onAdRequestStarted(adUnitId: String) {
         logger.info("onAdRequestStarted \(adUnitId)")
         requestDelegate?.didStartAdRequest(forAdUnitIdentifier: adUnitId)
+    }
+    
+    override func onCreativeIdGenerated(creativeId: String, maxAd: MaxAd) {
+        logger.info("onCreativeIdGenerated \(creativeId)")
+        adReviewDelegate?.didGenerateCreativeIdentifier(creativeId, for: MAAd(maxAd))
     }
     
     override func onAdLoaded(maxAd: MaxAd) {
@@ -164,8 +175,9 @@ struct AppLovinAdViewWrapper: UIViewRepresentable {
     let delegate: MAAdViewAdDelegate?
     let revenueDelegate: MAAdRevenueDelegate?
     let requestDelegate: MAAdRequestDelegate?
+    let adReviewDelegate: MAAdReviewDelegate?
     
-    init(bannerAdUnitIdentifier: String, adFormat: MAAdFormat? = nil, configuration: MAAdViewConfiguration? = nil, placement: String?, backgroundColor: Color = .black, delegate: MAAdViewAdDelegate? = nil, revenueDelegate: MAAdRevenueDelegate? = nil, requestDelegate: MAAdRequestDelegate? = nil) {
+    init(bannerAdUnitIdentifier: String, adFormat: MAAdFormat? = nil, configuration: MAAdViewConfiguration? = nil, placement: String?, backgroundColor: Color = .black, delegate: MAAdViewAdDelegate? = nil, revenueDelegate: MAAdRevenueDelegate? = nil, requestDelegate: MAAdRequestDelegate? = nil, adReviewDelegate: MAAdReviewDelegate? = nil) {
         self.bannerAdUnitIdentifier = bannerAdUnitIdentifier
         self.placement = placement
         self.adFormat = adFormat
@@ -174,6 +186,7 @@ struct AppLovinAdViewWrapper: UIViewRepresentable {
         self.delegate = delegate
         self.revenueDelegate = revenueDelegate
         self.requestDelegate = requestDelegate
+        self.adReviewDelegate = adReviewDelegate
     }
     
     func makeUIView(context: Context) -> MAAdView
@@ -187,9 +200,11 @@ struct AppLovinAdViewWrapper: UIViewRepresentable {
         context.coordinator.delegate = delegate
         context.coordinator.revenueDelegate = revenueDelegate
         context.coordinator.requestDelegate = requestDelegate
+        context.coordinator.adReviewDelegate = adReviewDelegate
         adView.delegate = context.coordinator
         adView.revenueDelegate = context.coordinator
         adView.requestDelegate = context.coordinator
+        adView.adReviewDelegate = context.coordinator
         if let placement {
             adView.placement = placement
         }
@@ -211,11 +226,12 @@ struct AppLovinAdViewWrapper: UIViewRepresentable {
 }
 
 extension AppLovinAdViewWrapper {
-    class Coordinator: NSObject, MAAdViewAdDelegate, MAAdRevenueDelegate, MAAdRequestDelegate
+    class Coordinator: NSObject, MAAdViewAdDelegate, MAAdRevenueDelegate, MAAdRequestDelegate, MAAdReviewDelegate
         {
             weak var delegate: MAAdViewAdDelegate?
             weak var revenueDelegate: MAAdRevenueDelegate?
             weak var requestDelegate: MAAdRequestDelegate?
+            weak var adReviewDelegate: MAAdReviewDelegate?
             
             // MARK: MAAdRevenueDelegate Protocol
             
@@ -227,6 +243,12 @@ extension AppLovinAdViewWrapper {
             
             func didStartAdRequest(forAdUnitIdentifier adUnitIdentifier: String) {
                 requestDelegate?.didStartAdRequest(forAdUnitIdentifier: adUnitIdentifier)
+            }
+            
+            // MARK: MAAdReviewDelegate Protocol
+            
+            func didGenerateCreativeIdentifier(_ creativeIdentifier: String, for ad: MAAd) {
+                adReviewDelegate?.didGenerateCreativeIdentifier(creativeIdentifier, for: ad)
             }
             
             // MARK: MAAdDelegate Protocol
@@ -290,8 +312,9 @@ public struct SkipAppLovinAdView: View {
     let delegate: MAAdViewAdDelegate?
     let revenueDelegate: MAAdRevenueDelegate?
     let requestDelegate: MAAdRequestDelegate?
+    let adReviewDelegate: MAAdReviewDelegate?
     
-    public init(bannerAdUnitIdentifier: String, adFormat: MAAdFormat, configuration: MAAdViewConfiguration? = nil, placement: String? = nil, delegate: MAAdViewAdDelegate? = nil, revenueDelegate: MAAdRevenueDelegate? = nil, requestDelegate: MAAdRequestDelegate? = nil) {
+    public init(bannerAdUnitIdentifier: String, adFormat: MAAdFormat, configuration: MAAdViewConfiguration? = nil, placement: String? = nil, delegate: MAAdViewAdDelegate? = nil, revenueDelegate: MAAdRevenueDelegate? = nil, requestDelegate: MAAdRequestDelegate? = nil, adReviewDelegate: MAAdReviewDelegate? = nil) {
         self.bannerAdUnitIdentifier = bannerAdUnitIdentifier
         self.adFormat = adFormat
         self.configuration = configuration
@@ -299,6 +322,7 @@ public struct SkipAppLovinAdView: View {
         self.delegate = delegate
         self.revenueDelegate = revenueDelegate
         self.requestDelegate = requestDelegate
+        self.adReviewDelegate = adReviewDelegate
     }
     public var body: some View {
         AppLovinAdViewWrapper(
@@ -307,7 +331,8 @@ public struct SkipAppLovinAdView: View {
             placement: placement,
             delegate: delegate,
             revenueDelegate: revenueDelegate,
-            requestDelegate: requestDelegate
+            requestDelegate: requestDelegate,
+            adReviewDelegate: adReviewDelegate
         )
         .frame(width: adFormat.size.width, height: adFormat.size.height)
     }
@@ -322,14 +347,16 @@ public struct SkipAppLovinFlexibleBannerAdView: View {
     let delegate: MAAdViewAdDelegate?
     let revenueDelegate: MAAdRevenueDelegate?
     let requestDelegate: MAAdRequestDelegate?
+    let adReviewDelegate: MAAdReviewDelegate?
     
-    public init(bannerAdUnitIdentifier: String, configuration: MAAdViewConfiguration? = nil, placement: String? = nil, delegate: MAAdViewAdDelegate? = nil, revenueDelegate: MAAdRevenueDelegate? = nil, requestDelegate: MAAdRequestDelegate? = nil) {
+    public init(bannerAdUnitIdentifier: String, configuration: MAAdViewConfiguration? = nil, placement: String? = nil, delegate: MAAdViewAdDelegate? = nil, revenueDelegate: MAAdRevenueDelegate? = nil, requestDelegate: MAAdRequestDelegate? = nil, adReviewDelegate: MAAdReviewDelegate? = nil) {
         self.bannerAdUnitIdentifier = bannerAdUnitIdentifier
         self.configuration = configuration
         self.placement = placement
         self.delegate = delegate
         self.revenueDelegate = revenueDelegate
         self.requestDelegate = requestDelegate
+        self.adReviewDelegate = adReviewDelegate
     }
     @State var width: CGFloat? = nil
     @State var adFormat: MAAdFormat?
@@ -342,7 +369,8 @@ public struct SkipAppLovinFlexibleBannerAdView: View {
                     placement: placement,
                     delegate: delegate,
                     revenueDelegate: revenueDelegate,
-                    requestDelegate: requestDelegate
+                    requestDelegate: requestDelegate,
+                    adReviewDelegate: adReviewDelegate
                 )
                 .id("\(uuid)-\(adFormat)") // rebuild AdView from scratch when the format changes
                 .frame(height: adFormat.adaptiveSize(forWidth: width).height)

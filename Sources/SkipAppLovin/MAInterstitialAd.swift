@@ -15,6 +15,7 @@ import com.applovin.mediation.MaxAdListener
 import com.applovin.mediation.MaxError
 import com.applovin.mediation.MaxAdRevenueListener
 import com.applovin.mediation.MaxAdRequestListener
+import com.applovin.mediation.MaxAdReviewListener
 
 /// This class represents a full-screen interstitial ad.
 public class MAInterstitialAd {
@@ -35,7 +36,7 @@ public class MAInterstitialAd {
     
     /// A delegate that will be notified about Ad Review
     /// events.
-    //weak var adReviewDelegate: MAAdReviewDelegate?
+    public weak var adReviewDelegate: MAAdReviewDelegate?
     
     /// The ad unit identifier this MAInterstitialAd was
     /// initialized with and is loading ads for.
@@ -55,6 +56,7 @@ public class MAInterstitialAd {
         ad.setListener(listener)
         ad.setRevenueListener(listener)
         ad.setRequestListener(listener)
+        ad.setAdReviewListener(listener)
     }
     
     /// Load the ad for the current interstitial. Set
@@ -172,7 +174,7 @@ public class MAInterstitialAd {
     }
 }
 
-class MaxAdListenerAdapter: MaxAdListener, MaxAdRevenueListener, MaxAdRequestListener {
+class MaxAdListenerAdapter: MaxAdListener, MaxAdRevenueListener, MaxAdRequestListener, MaxAdReviewListener {
     weak var interstitialAd: MAInterstitialAd?
     init(_ interstitialAd: MAInterstitialAd) {
         self.interstitialAd = interstitialAd
@@ -184,6 +186,10 @@ class MaxAdListenerAdapter: MaxAdListener, MaxAdRevenueListener, MaxAdRequestLis
     
     override func onAdRequestStarted(adUnitId: String) {
         interstitialAd?.requestDelegate?.didStartAdRequest(forAdUnitIdentifier: adUnitId)
+    }
+    
+    override func onCreativeIdGenerated(creativeId: String, maxAd: MaxAd) {
+        interstitialAd?.adReviewDelegate?.didGenerateCreativeIdentifier(creativeId, for: MAAd(maxAd))
     }
     override func onAdLoaded(_ ad: MaxAd) {
         interstitialAd?.delegate?.didLoad(MAAd(ad))
