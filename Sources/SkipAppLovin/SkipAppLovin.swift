@@ -180,6 +180,19 @@ public struct SkipALSdkConfiguration: Sendable {
 
 public struct SkipAppLovin: @unchecked Sendable {
     public static let current = SkipAppLovin()
+    #if SKIP
+    let sdk: AppLovinSdk
+    init() {
+        sdk = AppLovinSdk.getInstance(ProcessInfo.processInfo.androidContext)
+    }
+    #else
+    let sdk: ALSdk
+    init() {
+        sdk = ALSdk.shared()
+    }
+    #endif
+    
+    
     
     public func initialize(
         sdkKey: String,
@@ -215,7 +228,7 @@ public struct SkipAppLovin: @unchecked Sendable {
             builder.setExceptionHandlerEnabled(exceptionHandlerEnabled)
         }
         let sdkConfig = await withCheckedContinuation { continuation in
-            AppLovinSdk.getInstance(ProcessInfo.processInfo.androidContext).initialize(builder.build()) { sdkConfig in
+            sdk.initialize(builder.build()) { sdkConfig in
                 continuation.resume(returning: sdkConfig)
             }
         }
@@ -265,24 +278,24 @@ public struct SkipAppLovin: @unchecked Sendable {
                 }
             }
         }
-        let sdkConfig = await ALSdk.shared().initialize(with: initConfig)
+        let sdkConfig = await sdk.initialize(with: initConfig)
         return SkipALSdkConfiguration(sdkConfig)
         #endif
     }
     
     public func showMediationDebugger() {
-        #if SKIP
-        AppLovinSdk.getInstance( UIApplication.shared.androidActivity ).showMediationDebugger();
-        #else
-        ALSdk.shared().showMediationDebugger()
-        #endif
+        sdk.showMediationDebugger()
     }
     
     public func showCreativeDebugger() {
+        sdk.showCreativeDebugger()
+    }
+    
+    public var settings: ALSdkSettings {
         #if SKIP
-        AppLovinSdk.getInstance( UIApplication.shared.androidActivity ).showCreativeDebugger();
+        ALSdkSettings(AppLovinSdk.getInstance( UIApplication.shared.androidActivity ).getSettings())
         #else
-        ALSdk.shared().showCreativeDebugger()
+        ALSdk.shared().settings
         #endif
     }
 }
