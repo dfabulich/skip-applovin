@@ -154,7 +154,7 @@ public class MAInterstitialAd {
     /// - Parameters:
     ///   - key: Parameter key.
     ///   - value: Parameter value.
-    func setExtraParameter(
+    public func setExtraParameter(
         key: String,
         value: String?
     ) {
@@ -168,7 +168,7 @@ public class MAInterstitialAd {
     /// - Parameters:
     ///   - key: Parameter key. Must not be null.
     ///   - value: Parameter value. May be null.
-    func setLocalExtraParameter(
+    public func setLocalExtraParameter(
         key: String,
         value: Any?
     ) {

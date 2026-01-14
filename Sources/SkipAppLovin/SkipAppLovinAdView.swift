@@ -35,8 +35,22 @@ struct AppLovinAdViewWrapper: View {
     let revenueDelegate: MAAdRevenueDelegate?
     let requestDelegate: MAAdRequestDelegate?
     let adReviewDelegate: MAAdReviewDelegate?
+    let extraParameters: [String: String]
+    let localExtraParameters: [String: Any?]
     
-    init(bannerAdUnitIdentifier: String, adFormat: MAAdFormat? = nil, configuration: MAAdViewConfiguration? = nil, placement: String?, backgroundColor: Color = .black, delegate: MAAdViewAdDelegate? = nil, revenueDelegate: MAAdRevenueDelegate? = nil, requestDelegate: MAAdRequestDelegate? = nil, adReviewDelegate: MAAdReviewDelegate? = nil) {
+    init(
+        bannerAdUnitIdentifier: String,
+        adFormat: MAAdFormat? = nil,
+        configuration: MAAdViewConfiguration? = nil,
+        placement: String?,
+        backgroundColor: Color = .black,
+        delegate: MAAdViewAdDelegate? = nil,
+        revenueDelegate: MAAdRevenueDelegate? = nil,
+        requestDelegate: MAAdRequestDelegate? = nil,
+        adReviewDelegate: MAAdReviewDelegate? = nil,
+        extraParameters: [String: String] = [:],
+        localExtraParameters: [String: Any?] = [:],
+    ) {
         self.bannerAdUnitIdentifier = bannerAdUnitIdentifier
         self.placement = placement
         self.adFormat = adFormat
@@ -46,6 +60,8 @@ struct AppLovinAdViewWrapper: View {
         self.revenueDelegate = revenueDelegate
         self.requestDelegate = requestDelegate
         self.adReviewDelegate = adReviewDelegate
+        self.extraParameters = extraParameters
+        self.localExtraParameters = localExtraParameters
     }
     
     var body: some View {
@@ -63,6 +79,12 @@ struct AppLovinAdViewWrapper: View {
                 }
                 if let placement {
                     adView.setPlacement(placement)
+                }
+                for (key, value) in extraParameters {
+                    adView.setExtraParameter(key, value)
+                }
+                for (key, value) in localExtraParameters {
+                    adView.setLocalExtraParameter(key, value)
                 }
                 let listener = AdViewWrapperListener(delegate: delegate, revenueDelegate: revenueDelegate, requestDelegate: requestDelegate, adReviewDelegate: adReviewDelegate)
                 adView.setListener(listener)
@@ -176,8 +198,22 @@ struct AppLovinAdViewWrapper: UIViewRepresentable {
     let revenueDelegate: MAAdRevenueDelegate?
     let requestDelegate: MAAdRequestDelegate?
     let adReviewDelegate: MAAdReviewDelegate?
+    let extraParameters: [String: String]
+    let localExtraParameters: [String: Any?]
     
-    init(bannerAdUnitIdentifier: String, adFormat: MAAdFormat? = nil, configuration: MAAdViewConfiguration? = nil, placement: String?, backgroundColor: Color = .black, delegate: MAAdViewAdDelegate? = nil, revenueDelegate: MAAdRevenueDelegate? = nil, requestDelegate: MAAdRequestDelegate? = nil, adReviewDelegate: MAAdReviewDelegate? = nil) {
+    init(
+        bannerAdUnitIdentifier: String,
+        adFormat: MAAdFormat? = nil,
+        configuration: MAAdViewConfiguration? = nil,
+        placement: String?,
+        backgroundColor: Color = .black,
+        delegate: MAAdViewAdDelegate? = nil,
+        revenueDelegate: MAAdRevenueDelegate? = nil,
+        requestDelegate: MAAdRequestDelegate? = nil,
+        adReviewDelegate: MAAdReviewDelegate? = nil,
+        extraParameters: [String: String] = [:],
+        localExtraParameters: [String: Any?] = [:],
+    ) {
         self.bannerAdUnitIdentifier = bannerAdUnitIdentifier
         self.placement = placement
         self.adFormat = adFormat
@@ -187,6 +223,8 @@ struct AppLovinAdViewWrapper: UIViewRepresentable {
         self.revenueDelegate = revenueDelegate
         self.requestDelegate = requestDelegate
         self.adReviewDelegate = adReviewDelegate
+        self.extraParameters = extraParameters
+        self.localExtraParameters = localExtraParameters
     }
     
     func makeUIView(context: Context) -> MAAdView
@@ -207,6 +245,12 @@ struct AppLovinAdViewWrapper: UIViewRepresentable {
         adView.adReviewDelegate = context.coordinator
         if let placement {
             adView.placement = placement
+        }
+        for (key, value) in extraParameters {
+            adView.setExtraParameterForKey(key, value: value)
+        }
+        for (key, value) in localExtraParameters {
+            adView.setLocalExtraParameterForKey(key, value: value)
         }
         // Set background color for banners to be fully functional
         adView.backgroundColor = backgroundColor
@@ -313,8 +357,21 @@ public struct SkipAppLovinAdView: View {
     let revenueDelegate: MAAdRevenueDelegate?
     let requestDelegate: MAAdRequestDelegate?
     let adReviewDelegate: MAAdReviewDelegate?
+    let extraParameters: [String: String]
+    let localExtraParameters: [String: Any?]
     
-    public init(bannerAdUnitIdentifier: String, adFormat: MAAdFormat, configuration: MAAdViewConfiguration? = nil, placement: String? = nil, delegate: MAAdViewAdDelegate? = nil, revenueDelegate: MAAdRevenueDelegate? = nil, requestDelegate: MAAdRequestDelegate? = nil, adReviewDelegate: MAAdReviewDelegate? = nil) {
+    public init(
+        bannerAdUnitIdentifier: String,
+        adFormat: MAAdFormat,
+        configuration: MAAdViewConfiguration? = nil,
+        placement: String? = nil,
+        delegate: MAAdViewAdDelegate? = nil,
+        revenueDelegate: MAAdRevenueDelegate? = nil,
+        requestDelegate: MAAdRequestDelegate? = nil,
+        adReviewDelegate: MAAdReviewDelegate? = nil,
+        extraParameters: [String: String] = [:],
+        localExtraParameters: [String: Any?] = [:],
+    ) {
         self.bannerAdUnitIdentifier = bannerAdUnitIdentifier
         self.adFormat = adFormat
         self.configuration = configuration
@@ -323,6 +380,8 @@ public struct SkipAppLovinAdView: View {
         self.revenueDelegate = revenueDelegate
         self.requestDelegate = requestDelegate
         self.adReviewDelegate = adReviewDelegate
+        self.extraParameters = extraParameters
+        self.localExtraParameters = localExtraParameters
     }
     public var body: some View {
         AppLovinAdViewWrapper(
@@ -332,7 +391,9 @@ public struct SkipAppLovinAdView: View {
             delegate: delegate,
             revenueDelegate: revenueDelegate,
             requestDelegate: requestDelegate,
-            adReviewDelegate: adReviewDelegate
+            adReviewDelegate: adReviewDelegate,
+            extraParameters: extraParameters,
+            localExtraParameters: localExtraParameters,
         )
         .frame(width: adFormat.size.width, height: adFormat.size.height)
     }
@@ -348,8 +409,20 @@ public struct SkipAppLovinFlexibleBannerAdView: View {
     let revenueDelegate: MAAdRevenueDelegate?
     let requestDelegate: MAAdRequestDelegate?
     let adReviewDelegate: MAAdReviewDelegate?
+    let extraParameters: [String: String]
+    let localExtraParameters: [String: Any?]
     
-    public init(bannerAdUnitIdentifier: String, configuration: MAAdViewConfiguration? = nil, placement: String? = nil, delegate: MAAdViewAdDelegate? = nil, revenueDelegate: MAAdRevenueDelegate? = nil, requestDelegate: MAAdRequestDelegate? = nil, adReviewDelegate: MAAdReviewDelegate? = nil) {
+    public init(
+        bannerAdUnitIdentifier: String,
+        configuration: MAAdViewConfiguration? = nil,
+        placement: String? = nil,
+        delegate: MAAdViewAdDelegate? = nil,
+        revenueDelegate: MAAdRevenueDelegate? = nil,
+        requestDelegate: MAAdRequestDelegate? = nil,
+        adReviewDelegate: MAAdReviewDelegate? = nil,
+        extraParameters: [String: String] = [:],
+        localExtraParameters: [String: Any?] = [:],
+    ) {
         self.bannerAdUnitIdentifier = bannerAdUnitIdentifier
         self.configuration = configuration
         self.placement = placement
@@ -357,6 +430,9 @@ public struct SkipAppLovinFlexibleBannerAdView: View {
         self.revenueDelegate = revenueDelegate
         self.requestDelegate = requestDelegate
         self.adReviewDelegate = adReviewDelegate
+        self.extraParameters = extraParameters
+        self.localExtraParameters = localExtraParameters
+        
     }
     @State var width: CGFloat? = nil
     @State var adFormat: MAAdFormat?
@@ -370,7 +446,9 @@ public struct SkipAppLovinFlexibleBannerAdView: View {
                     delegate: delegate,
                     revenueDelegate: revenueDelegate,
                     requestDelegate: requestDelegate,
-                    adReviewDelegate: adReviewDelegate
+                    adReviewDelegate: adReviewDelegate,
+                    extraParameters: extraParameters,
+                    localExtraParameters: localExtraParameters,
                 )
                 .id("\(uuid)-\(adFormat)") // rebuild AdView from scratch when the format changes
                 .frame(height: adFormat.adaptiveSize(forWidth: width).height)
