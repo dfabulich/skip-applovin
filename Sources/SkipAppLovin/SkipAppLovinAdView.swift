@@ -187,7 +187,7 @@ class AdViewWrapperListener: MaxAdViewAdListener, MaxAdRevenueListener, MaxAdReq
     }
 }
 
-#else
+#elseif canImport(AppLovinSDK)
 // MARK: - iOS
 import AppLovinSDK
 
@@ -357,6 +357,7 @@ private struct WidthPreferenceKey: PreferenceKey {
     }
 }
 
+#if SKIP || canImport(AppLovinSDK)
 public struct SkipAppLovinAdView: View {
     let bannerAdUnitIdentifier: String
     let adFormat: MAAdFormat
@@ -521,4 +522,4 @@ public struct SkipAppLovinFlexibleBannerAdView: View {
 }
 
 #endif
-
+#endif

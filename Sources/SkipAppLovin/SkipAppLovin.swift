@@ -9,10 +9,11 @@ import OSLog
 import com.applovin.sdk.AppLovinSdk
 import com.applovin.sdk.AppLovinSdkInitializationConfiguration
 import androidx.compose.ui.platform.LocalContext
-#else
+#elseif canImport(AppLovinSDK)
 import AppLovinSDK
 #endif
 
+#if SKIP || canImport(AppLovinSDK)
 public struct SkipAppLovin: @unchecked Sendable {
     public static let current = SkipAppLovin()
     #if SKIP
@@ -143,4 +144,5 @@ public struct SkipAppLovin: @unchecked Sendable {
     }
 }
 
+#endif
 #endif
