@@ -7,179 +7,11 @@ import OSLog
 
 #if SKIP
 import com.applovin.sdk.AppLovinSdk
-import com.applovin.sdk.AppLovinSdkConfiguration
 import com.applovin.sdk.AppLovinSdkInitializationConfiguration
 import androidx.compose.ui.platform.LocalContext
-
-@available(*, deprecated, message: "This API has been deprecated and will be removed in a future release.")
-enum ALConsentDialogState: Int {
-    case unknown
-    case applies
-    case doesNotApply
-}
-
-
 #else
 import AppLovinSDK
 #endif
-
-// SKIP @bridge
-public struct SkipALSdkConfiguration: Sendable, CustomStringConvertible {
-    /// This enum represents the user's geography used to
-    /// determine the type of consent flow shown to the user.
-    enum ConsentFlowUserGeography: Int {
-        /// User's geography is unknown.
-        case unknown
-        
-        /// The user is in GDPR region.
-        case GDPR
-        
-        /// The user is in a non-GDPR region.
-        case other
-    }
-    
-    /// AppLovin SDK-defined app tracking transparency status
-    /// values (extended to include "unavailable" state on iOS
-    /// before iOS14).
-    enum AppTrackingTransparencyStatus: Int {
-        /// Device is on iOS before iOS14,
-        /// AppTrackingTransparency.framework is not available.
-        case unavailable = -1
-        
-        /// The user has not yet received an authorization
-        /// request to authorize access to app-related data that
-        /// can be used for tracking the user or the device.
-        case notDetermined
-        
-        /// Authorization to access app-related data that can be
-        /// used for tracking the user or the device is
-        /// restricted.
-        case restricted
-        
-        /// The user denies authorization to access app-related
-        /// data that can be used for tracking the user or the
-        /// device.
-        case denied
-        
-        /// The user authorizes access to app-related data that
-        /// can be used for tracking the user or the device.
-        case authorized
-    }
-    
-    /// Get the user's geography used to determine the type of
-    /// consent flow shown to the user.
-    /// If no such determination could be made,
-    /// ConsentFlowUserGeography.unknown will be returned.
-    let consentFlowUserGeography: ConsentFlowUserGeography
-    
-    /// Gets the country code for this user. The value of this
-    /// property will be an empty string if no country code is
-    /// available for this user.
-    ///
-    /// - Warning: Do not confuse this with the currency code
-    ///   which is "USD" in most cases.
-    let countryCode: String
-    
-    /// Get the list of those Ad Unit IDs that are in the
-    /// waterfall that is currently active for a particular user
-    /// and for which Amazon Publisher Services is enabled.
-    ///
-    /// Which waterfall is currently active for a user depends
-    /// on things like A/B tests, keyword targeting, or DNT.
-    ///
-    /// - Returns: `nil` when configuration fetching fails
-    ///   (e.g. in the case of no connection) or an empty array
-    ///   if no Ad Unit IDs have Amazon Publisher Services
-    ///   enabled.
-    let enabledAmazonAdUnitIdentifiers: [String]?
-    
-    /// Indicates whether or not the user authorizes access to
-    /// app-related data that can be used for tracking the user
-    /// or the device.
-    ///
-    /// - Warning: Users can revoke permission at any time
-    ///   through the "Allow Apps To Request To Track" privacy
-    ///   setting on the device.
-    let appTrackingTransparencyStatus:
-        AppTrackingTransparencyStatus
-    
-    /// Whether or not test mode is enabled for this session.
-    ///
-    /// Returns `true` in one of the following cases:
-    /// - ALSdkInitializationConfiguration.
-    ///   testDeviceAdvertisingIdentifiers was set with current
-    ///   device's IDFA prior to SDK initialization.
-    /// - Current device was registered as a test device
-    ///   through MAX dashboard -> MAX Test Devices prior to
-    ///   SDK initialization.
-    /// - Test mode was manually enabled for this session
-    ///   through the Mediation Debugger during the last
-    ///   session.
-    /// - Current device is a simulator.
-    let isTestModeEnabled: Bool
-    
-    @available(*, deprecated, message: "This API has been deprecated and will be removed in a future release.")
-    var consentDialogState: ALConsentDialogState {
-        return .unknown
-    }
-    
-    #if SKIP
-    internal init(_ sdkConfig: AppLovinSdkConfiguration) {
-        let consentFlowUserGeography: AppLovinSdkConfiguration.ConsentFlowUserGeography = sdkConfig.getConsentFlowUserGeography()
-        switch consentFlowUserGeography {
-        case .UNKNOWN:
-            self.consentFlowUserGeography = .unknown
-        case .GDPR:
-            self.consentFlowUserGeography = .GDPR
-        case .OTHER:
-            self.consentFlowUserGeography = .other
-        }
-        self.countryCode = sdkConfig.getCountryCode()
-        if let enabledAmazonAdUnitIdentifiers = sdkConfig.getEnabledAmazonAdUnitIds() {
-            self.enabledAmazonAdUnitIdentifiers = Array(enabledAmazonAdUnitIdentifiers)
-        } else {
-            self.enabledAmazonAdUnitIdentifiers = nil
-        }
-        self.appTrackingTransparencyStatus = .unavailable
-        self.isTestModeEnabled = sdkConfig.isTestModeEnabled()
-    }
-    #else
-    internal init(_ sdkConfig: ALSdkConfiguration) {
-        switch sdkConfig.consentFlowUserGeography {
-        case .unknown:
-            self.consentFlowUserGeography = .unknown
-        case .GDPR:
-            self.consentFlowUserGeography = .GDPR
-        case .other:
-            self.consentFlowUserGeography = .other
-        @unknown default:
-            fatalError()
-        }
-        self.countryCode = sdkConfig.countryCode
-        self.enabledAmazonAdUnitIdentifiers = sdkConfig.enabledAmazonAdUnitIdentifiers
-        switch sdkConfig.appTrackingTransparencyStatus {
-        case .unavailable:
-            self.appTrackingTransparencyStatus = .unavailable
-        case .notDetermined:
-            self.appTrackingTransparencyStatus = .notDetermined
-        case .restricted:
-            self.appTrackingTransparencyStatus = .restricted
-        case .denied:
-            self.appTrackingTransparencyStatus = .denied
-        case .authorized:
-            self.appTrackingTransparencyStatus = .authorized
-        @unknown default:
-            fatalError()
-        }
-        self.isTestModeEnabled = sdkConfig.isTestModeEnabled
-    }
-    
-    public var description: String {
-        "SkipAlSdkConfiguration testMode=\(isTestModeEnabled)"
-    }
-    #endif
-}
-
 
 public struct SkipAppLovin: @unchecked Sendable {
     public static let current = SkipAppLovin()
@@ -206,7 +38,7 @@ public struct SkipAppLovin: @unchecked Sendable {
         testDeviceAdvertisingIdentifiers: [String]? = nil,
         adUnitIdentifiers: [String]? = nil,
         exceptionHandlerEnabled: Bool? = nil
-    ) async -> SkipALSdkConfiguration {
+    ) async -> ALSdkConfiguration {
         #if SKIP
         let builder = AppLovinSdkInitializationConfiguration.builder(sdkKey)
         guard axonEventKey == nil else {
@@ -235,7 +67,7 @@ public struct SkipAppLovin: @unchecked Sendable {
                 continuation.resume(returning: sdkConfig)
             }
         }
-        return SkipALSdkConfiguration(sdkConfig)
+        return ALSdkConfiguration(sdkConfig)
         #else
         let initConfig: ALSdkInitializationConfiguration
         if let axonEventKey {
@@ -282,7 +114,7 @@ public struct SkipAppLovin: @unchecked Sendable {
             }
         }
         let sdkConfig = await sdk.initialize(with: initConfig)
-        return SkipALSdkConfiguration(sdkConfig)
+        return sdkConfig
         #endif
     }
     

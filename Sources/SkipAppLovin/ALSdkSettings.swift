@@ -115,18 +115,6 @@ public class ALTermsAndPrivacyPolicyFlowSettings {
     }
 }
 
-/// This enum represents the user's geography used to determine the type of consent flow shown to the user.
-public enum ALConsentFlowUserGeography: Int {
-    /// User's geography is unknown.
-    case unknown
-    
-    /// The user is in GDPR region.
-    case GDPR
-    
-    /// The user is in a non-GDPR region.
-    case other
-}
-
 // MARK: - ALSdkSettings
 
 /// This class contains mutable settings for the AppLovin SDK.
