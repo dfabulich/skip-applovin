@@ -70,34 +70,6 @@ public class MAInterstitialAd {
     ///   notified about display events.
     /// - Use isReady to check if an ad was successfully
     ///   loaded.
-    public func show() {
-        show(forPlacement: nil)
-    }
-    
-    /// Show the loaded interstitial ad for a given placement
-    /// to tie ad events to.
-    ///
-    /// - Use delegate to assign a delegate that should be
-    ///   notified about display events.
-    /// - Use isReady to check if an ad was successfully
-    ///   loaded.
-    ///
-    /// - Parameter placement: The placement to tie the
-    ///   showing ad's events to.
-    public func show(forPlacement placement: String?) {
-        show(
-            forPlacement: placement,
-            customData: nil
-        )
-    }
-    
-    /// Show the loaded interstitial ad for a given placement
-    /// and custom data to tie ad events to.
-    ///
-    /// - Use delegate to assign a delegate that should be
-    ///   notified about display events.
-    /// - Use isReady to check if an ad was successfully
-    ///   loaded.
     ///
     /// - Parameters:
     ///   - placement: The placement to tie the showing ad's
@@ -105,8 +77,8 @@ public class MAInterstitialAd {
     ///   - customData: The custom data to tie the showing
     ///     ad's events to. Maximum size is 8KB.
     public func show(
-        forPlacement placement: String?,
-        customData: String?
+        forPlacement placement: String? = nil,
+        customData: String? = nil
     ) {
         show(
             forPlacement: placement,
@@ -116,8 +88,8 @@ public class MAInterstitialAd {
     }
     
     /// Show the loaded interstitial ad for a given placement
-    /// and custom data to tie ad events to, and a view
-    /// controller to present the ad from.
+    /// and custom data to tie ad events to, and an
+    /// activity to present the ad from.
     ///
     /// - Use delegate to assign a delegate that should be
     ///   notified about display events.
