@@ -29,10 +29,22 @@ public struct SkipAppLovin: @unchecked Sendable {
     
     
     
+    /// Initializes the AppLovin SDK.
+    ///
+    /// - Parameters:
+    ///   - sdkKey: SDK key for the AppLovin SDK. See https://dash.applovin.com/o/account#keys
+    ///   - axonEventKey: Axon event key for the AppLovin SDK.
+    ///   - mediationProvider: The mediation provider. Set this either by using one of the provided strings in ALMediationProvider, or your own string if you do not find an applicable one there.
+    ///   - pluginVersion: Sets the plugin version for the mediation adapter or plugin.
+    ///   - segmentCollection: A collection of user segments. See https://support.axon.ai/en/max/ios/overview/data-and-keyword-passing/ for more details
+    ///   - testDeviceAdvertisingIdentifiers: Enable devices to receive test ads by passing in the advertising identifier (IDFA or IDFV on iOS, GAID on Android) of each test device. Refer to AppLovin logs for the id of your current device.
+    ///   - adUnitIdentifiers: The MAX ad unit IDs that you will use for this instance of the SDK. This initializes third-party SDKs with the credentials configured for these ad unit IDs.
+    ///   - exceptionHandlerEnabled: Whether or not the AppLovin SDK listens to exceptions. Defaults to true.
+    /// - Returns: An ALSdkConfiguration object.
     public func initialize(
         sdkKey: String,
         axonEventKey: String? = nil,
-        mediationProvider: String? = nil,
+        mediationProvider: String = ALMediationProviderMAX,
         pluginVersion: String? = nil,
         segmentCollection: MASegmentCollection? = nil,
         testDeviceAdvertisingIdentifiers: [String]? = nil,
@@ -44,9 +56,7 @@ public struct SkipAppLovin: @unchecked Sendable {
         guard axonEventKey == nil else {
             fatalError("axonEventKey not supported in SkipAppLovin")
         }
-        if let mediationProvider {
-            builder.setMediationProvider(mediationProvider)
-        }
+        builder.setMediationProvider(mediationProvider)
         if let pluginVersion {
             builder.setPluginVersion(pluginVersion)
         }
@@ -72,9 +82,7 @@ public struct SkipAppLovin: @unchecked Sendable {
         let initConfig: ALSdkInitializationConfiguration
         if let axonEventKey {
             initConfig = ALSdkInitializationConfiguration(sdkKey: sdkKey, axonEventKey: axonEventKey) { builder in
-                if let mediationProvider {
-                    builder.mediationProvider = mediationProvider
-                }
+                builder.mediationProvider = mediationProvider
                 if let pluginVersion {
                     builder.pluginVersion = pluginVersion
                 }
@@ -93,9 +101,7 @@ public struct SkipAppLovin: @unchecked Sendable {
             }
         } else {
             initConfig = ALSdkInitializationConfiguration(sdkKey: sdkKey) { builder in
-                if let mediationProvider {
-                    builder.mediationProvider = mediationProvider
-                }
+                builder.mediationProvider = mediationProvider
                 if let pluginVersion {
                     builder.pluginVersion = pluginVersion
                 }
