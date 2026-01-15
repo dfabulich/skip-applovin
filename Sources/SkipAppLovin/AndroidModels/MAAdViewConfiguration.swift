@@ -124,7 +124,7 @@ public class MAAdViewConfiguration {
     ///   the builder.
     /// - Returns: A MAAdViewConfiguration object.
     public init(
-        withBuilderBlock builderBlock: (
+        withBuilderBlock builderBlock: @escaping (
             MAAdViewConfigurationBuilder
         ) -> Void
     ) {

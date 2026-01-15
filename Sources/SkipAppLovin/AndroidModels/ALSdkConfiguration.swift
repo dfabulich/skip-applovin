@@ -48,7 +48,7 @@ public enum ALAppTrackingTransparencyStatus: Int {
 }
 
 /// This class contains various properties of the AppLovin SDK configuration.
-public class ALSdkConfiguration: CustomStringConvertible {
+public final class ALSdkConfiguration: CustomStringConvertible, @unchecked Sendable {
     private let sdkConfig: AppLovinSdkConfiguration
     
     internal init(_ sdkConfig: AppLovinSdkConfiguration) {
