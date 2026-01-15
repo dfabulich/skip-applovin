@@ -370,6 +370,20 @@ public struct SkipAppLovinAdView: View {
     let localExtraParameters: [String: Any?]
     let customData: String?
     
+    /// Creates a banner/leader/MREC ad view for a given ad unit ID
+    ///
+    /// - Parameters:
+    ///   - bannerAdUnitIdentifier: Ad unit ID to load ads for.
+    ///   - adFormat: Ad format to load ads for: banner, leader, or mrec.
+    ///   - configuration: Configuration object for customizing the ad view's properties. See MAAdViewConfiguration for more details.
+    ///   - placement: The placement name that you assign when you integrate each ad format, for granular reporting in ad events (e.g. "Rewarded_Store", "Rewarded_LevelEnd").
+    ///   - delegate: A delegate that will be notified about ad events.
+    ///   - revenueDelegate: A delegate that will be notified about ad revenue events (`didPayRevenueForAd`).
+    ///   - requestDelegate: A delegate that will be notified about ad request events (`didStartAdRequest`).
+    ///   - adReviewDelegate: A delegate that will be notified about Ad Review events (`didGenerateCreativeIdentifier`).
+    ///   - extraParameters: Extra parameter key/value pairs for the ad.
+    ///   - localExtraParameters: Local extra parameters to pass to the adapter instances.
+    ///   - customData: The custom data to tie the showing ad to, for ILRD and rewarded postbacks via the {CUSTOM_DATA} macro. Maximum size is 8KB.
     public init(
         bannerAdUnitIdentifier: String,
         adFormat: MAAdFormat,
@@ -425,6 +439,19 @@ public struct SkipAppLovinFlexibleBannerAdView: View {
     let localExtraParameters: [String: Any?]
     let customData: String?
     
+    /// Creates an ad view that automatically switches between banner and leaderboard ad formats based on available width.
+    ///
+    /// - Parameters:
+    ///   - bannerAdUnitIdentifier: Ad unit ID to load ads for.
+    ///   - configuration: Configuration object for customizing the ad view's properties. See MAAdViewConfiguration for more details.
+    ///   - placement: The placement name that you assign when you integrate each ad format, for granular reporting in ad events (e.g. "Rewarded_Store", "Rewarded_LevelEnd").
+    ///   - delegate: A delegate that will be notified about ad events.
+    ///   - revenueDelegate: A delegate that will be notified about ad revenue events (`didPayRevenueForAd`).
+    ///   - requestDelegate: A delegate that will be notified about ad request events (`didStartAdRequest`).
+    ///   - adReviewDelegate: A delegate that will be notified about Ad Review events (`didGenerateCreativeIdentifier`).
+    ///   - extraParameters: Extra parameter key/value pairs for the ad.
+    ///   - localExtraParameters: Local extra parameters to pass to the adapter instances.
+    ///   - customData: The custom data to tie the showing ad to, for ILRD and rewarded postbacks via the {CUSTOM_DATA} macro. Maximum size is 8KB.
     public init(
         bannerAdUnitIdentifier: String,
         configuration: MAAdViewConfiguration? = nil,
